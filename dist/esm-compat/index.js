@@ -46,7 +46,7 @@ function defaultGetStore() {
 
 function get(key) {
   var customStore = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : defaultGetStore();
-  return customStore('readonly', function (store) {
+  return customStore('readwrite', function (store) {
     return promisifyRequest(store.get(key));
   });
 }
@@ -94,7 +94,7 @@ function setMany(entries) {
 
 function getMany(keys) {
   var customStore = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : defaultGetStore();
-  return customStore('readonly', function (store) {
+  return customStore('readwrite', function (store) {
     return Promise.all(keys.map(function (key) {
       return promisifyRequest(store.get(key));
     }));
@@ -159,7 +159,7 @@ function clear() {
 }
 
 function eachCursor(customStore, callback) {
-  return customStore('readonly', function (store) {
+  return customStore('readwrite', function (store) {
     // This would be store.getAllKeys(), but it isn't supported by Edge or Safari.
     // And openKeyCursor isn't supported by Safari.
     store.openCursor().onsuccess = function () {

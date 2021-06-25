@@ -44,7 +44,7 @@ export function get<T = any>(
   key: IDBValidKey,
   customStore = defaultGetStore(),
 ): Promise<T | undefined> {
-  return customStore('readonly', (store) => promisifyRequest(store.get(key)));
+  return customStore('readwrite', (store) => promisifyRequest(store.get(key)));
 }
 
 /**
@@ -92,7 +92,7 @@ export function getMany<T = any>(
   keys: IDBValidKey[],
   customStore = defaultGetStore(),
 ): Promise<T[]> {
-  return customStore('readonly', (store) =>
+  return customStore('readwrite', (store) =>
     Promise.all(keys.map((key) => promisifyRequest(store.get(key)))),
   );
 }
@@ -160,7 +160,7 @@ function eachCursor(
   customStore: UseStore,
   callback: (cursor: IDBCursorWithValue) => void,
 ): Promise<void> {
-  return customStore('readonly', (store) => {
+  return customStore('readwrite', (store) => {
     // This would be store.getAllKeys(), but it isn't supported by Edge or Safari.
     // And openKeyCursor isn't supported by Safari.
     store.openCursor().onsuccess = function () {

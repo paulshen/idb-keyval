@@ -30,7 +30,7 @@ function defaultGetStore() {
  * @param customStore Method to get a custom store. Use with caution (see the docs).
  */
 function get(key, customStore = defaultGetStore()) {
-    return customStore('readonly', (store) => promisifyRequest(store.get(key)));
+    return customStore('readwrite', (store) => promisifyRequest(store.get(key)));
 }
 /**
  * Set a value with a key.
@@ -65,7 +65,7 @@ function setMany(entries, customStore = defaultGetStore()) {
  * @param customStore Method to get a custom store. Use with caution (see the docs).
  */
 function getMany(keys, customStore = defaultGetStore()) {
-    return customStore('readonly', (store) => Promise.all(keys.map((key) => promisifyRequest(store.get(key)))));
+    return customStore('readwrite', (store) => Promise.all(keys.map((key) => promisifyRequest(store.get(key)))));
 }
 /**
  * Update a value. This lets you see the old value and update it as an atomic operation.
@@ -115,7 +115,7 @@ function clear(customStore = defaultGetStore()) {
     });
 }
 function eachCursor(customStore, callback) {
-    return customStore('readonly', (store) => {
+    return customStore('readwrite', (store) => {
         // This would be store.getAllKeys(), but it isn't supported by Edge or Safari.
         // And openKeyCursor isn't supported by Safari.
         store.openCursor().onsuccess = function () {
