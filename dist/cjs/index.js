@@ -120,6 +120,15 @@ function del(key, customStore = defaultGetStore()) {
     });
 }
 /**
+ * Delete a particular key from the store.
+ *
+ * @param key
+ * @param customStore Method to get a custom store. Use with caution (see the docs).
+ */
+function delMany(keys, customStore = defaultGetStore()) {
+    return customStore('readwrite', (store) => Promise.all(keys.map((key) => promisifyRequest(store.delete(key)))).then());
+}
+/**
  * Clear all values in the store.
  *
  * @param customStore Method to get a custom store. Use with caution (see the docs).
@@ -178,6 +187,7 @@ exports.clear = clear;
 exports.close = close;
 exports.createStore = createStore;
 exports.del = del;
+exports.delMany = delMany;
 exports.entries = entries;
 exports.get = get;
 exports.getMany = getMany;

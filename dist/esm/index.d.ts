@@ -50,6 +50,13 @@ export declare function update<T = any>(key: IDBValidKey, updater: (oldValue: T 
  */
 export declare function del(key: IDBValidKey, customStore?: UseStore): Promise<void>;
 /**
+ * Delete a particular key from the store.
+ *
+ * @param key
+ * @param customStore Method to get a custom store. Use with caution (see the docs).
+ */
+export declare function delMany(keys: IDBValidKey[], customStore?: UseStore): Promise<void>;
+/**
  * Clear all values in the store.
  *
  * @param customStore Method to get a custom store. Use with caution (see the docs).
