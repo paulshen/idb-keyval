@@ -11,10 +11,26 @@ function promisifyRequest(request) {
     });
 }
 function createStore(dbName, storeName) {
-    const request = indexedDB.open(dbName);
-    request.onupgradeneeded = () => request.result.createObjectStore(storeName);
-    const dbp = promisifyRequest(request);
-    return (txMode, callback) => dbp.then((db) => callback(db.transaction(storeName, txMode).objectStore(storeName)));
+    let dbp;
+    function getDbp() {
+        if (dbp === undefined) {
+            const request = indexedDB.open(dbName);
+            request.onupgradeneeded = () => request.result.createObjectStore(storeName);
+            dbp = promisifyRequest(request);
+        }
+        return dbp;
+    }
+    return Object.assign((txMode, callback) => getDbp().then((db) => callback(db.transaction(storeName, txMode).objectStore(storeName))), {
+        close: () => {
+            if (dbp === undefined) {
+                return Promise.resolve();
+            }
+            return dbp.then((db) => {
+                db.close();
+                dbp = undefined;
+            });
+        },
+    });
 }
 let defaultGetStoreFunc;
 function defaultGetStore() {
@@ -154,8 +170,12 @@ function entries(customStore = defaultGetStore()) {
     const items = [];
     return eachCursor(customStore, (cursor) => items.push([cursor.key, cursor.value])).then(() => items);
 }
+function close(customStore = defaultGetStore()) {
+    return customStore.close();
+}
 
 exports.clear = clear;
+exports.close = close;
 exports.createStore = createStore;
 exports.del = del;
 exports.entries = entries;

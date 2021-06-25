@@ -1,6 +1,9 @@
 export declare function promisifyRequest<T = undefined>(request: IDBRequest<T> | IDBTransaction): Promise<T>;
 export declare function createStore(dbName: string, storeName: string): UseStore;
-export declare type UseStore = <T>(txMode: IDBTransactionMode, callback: (store: IDBObjectStore) => T | PromiseLike<T>) => Promise<T>;
+export interface UseStore {
+    <T>(txMode: IDBTransactionMode, callback: (store: IDBObjectStore) => T | PromiseLike<T>): Promise<T>;
+    close: () => Promise<void>;
+}
 /**
  * Get a value by its key.
  *
@@ -70,4 +73,5 @@ export declare function values<T = any>(customStore?: UseStore): Promise<T[]>;
  * @param customStore Method to get a custom store. Use with caution (see the docs).
  */
 export declare function entries<KeyType extends IDBValidKey, ValueType = any>(customStore?: UseStore): Promise<[KeyType, ValueType][]>;
+export declare function close(customStore?: UseStore): Promise<void>;
 //# sourceMappingURL=index.d.ts.map

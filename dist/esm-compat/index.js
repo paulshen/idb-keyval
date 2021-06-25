@@ -13,18 +13,38 @@ function promisifyRequest(request) {
 }
 
 function createStore(dbName, storeName) {
-  var request = indexedDB.open(dbName);
+  var dbp;
 
-  request.onupgradeneeded = function () {
-    return request.result.createObjectStore(storeName);
-  };
+  function getDbp() {
+    if (dbp === undefined) {
+      var request = indexedDB.open(dbName);
 
-  var dbp = promisifyRequest(request);
-  return function (txMode, callback) {
-    return dbp.then(function (db) {
+      request.onupgradeneeded = function () {
+        return request.result.createObjectStore(storeName);
+      };
+
+      dbp = promisifyRequest(request);
+    }
+
+    return dbp;
+  }
+
+  return Object.assign(function (txMode, callback) {
+    return getDbp().then(function (db) {
       return callback(db.transaction(storeName, txMode).objectStore(storeName));
     });
-  };
+  }, {
+    close: function close() {
+      if (dbp === undefined) {
+        return Promise.resolve();
+      }
+
+      return dbp.then(function (db) {
+        db.close();
+        dbp = undefined;
+      });
+    }
+  });
 }
 
 var defaultGetStoreFunc;
@@ -220,4 +240,9 @@ function entries() {
   });
 }
 
-export { clear, createStore, del, entries, get, getMany, keys, promisifyRequest, set, setMany, update, values };
+function close() {
+  var customStore = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultGetStore();
+  return customStore.close();
+}
+
+export { clear, close, createStore, del, entries, get, getMany, keys, promisifyRequest, set, setMany, update, values };

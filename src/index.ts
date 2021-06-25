@@ -10,20 +10,46 @@ export function promisifyRequest<T = undefined>(
 }
 
 export function createStore(dbName: string, storeName: string): UseStore {
-  const request = indexedDB.open(dbName);
-  request.onupgradeneeded = () => request.result.createObjectStore(storeName);
-  const dbp = promisifyRequest(request);
+  let dbp: Promise<IDBDatabase> | undefined;
+  function getDbp() {
+    if (dbp === undefined) {
+      const request = indexedDB.open(dbName);
+      request.onupgradeneeded = () =>
+        request.result.createObjectStore(storeName);
+      dbp = promisifyRequest(request);
+    }
+    return dbp;
+  }
 
-  return (txMode, callback) =>
-    dbp.then((db) =>
-      callback(db.transaction(storeName, txMode).objectStore(storeName)),
-    );
+  return Object.assign(
+    <T>(
+      txMode: IDBTransactionMode,
+      callback: (store: IDBObjectStore) => T | PromiseLike<T>,
+    ) =>
+      getDbp().then((db) =>
+        callback(db.transaction(storeName, txMode).objectStore(storeName)),
+      ),
+    {
+      close: () => {
+        if (dbp === undefined) {
+          return Promise.resolve();
+        }
+        return dbp.then((db) => {
+          db.close();
+          dbp = undefined;
+        });
+      },
+    },
+  );
 }
 
-export type UseStore = <T>(
-  txMode: IDBTransactionMode,
-  callback: (store: IDBObjectStore) => T | PromiseLike<T>,
-) => Promise<T>;
+export interface UseStore {
+  <T>(
+    txMode: IDBTransactionMode,
+    callback: (store: IDBObjectStore) => T | PromiseLike<T>,
+  ): Promise<T>;
+  close: () => Promise<void>;
+}
 
 let defaultGetStoreFunc: UseStore | undefined;
 
@@ -213,4 +239,8 @@ export function entries<KeyType extends IDBValidKey, ValueType = any>(
   return eachCursor(customStore, (cursor) =>
     items.push([cursor.key as KeyType, cursor.value]),
   ).then(() => items);
+}
+
+export function close(customStore = defaultGetStore()): Promise<void> {
+  return customStore.close();
 }
